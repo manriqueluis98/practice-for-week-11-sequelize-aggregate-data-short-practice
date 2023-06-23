@@ -124,6 +124,60 @@ app.get('/cats/:id/toys', async (req, res, next) => {
 // of all the aggregate data according to spec
 // Your code here
 
+app.get('/data-summary', async (req, res, next) => {
+    const totalNumberOfCats = await Cat.count()
+
+    const totalNumberOfToys = await Toy.count()
+
+    const toySummary = await Toy.findAll({
+        attributes: {
+            exclude: ['id', 'name', 'color', 'price', 'createdAt', 'updatedAt'],
+            include: [
+                [
+                    sequelize.fn("AVG", sequelize.col("price")),
+                    "averagePriceOfAToy"
+                ],
+                [
+                    sequelize.fn("SUM", sequelize.col("price")),
+                    "totalPriceOfAllToys"
+                ],
+                [
+                    sequelize.fn("MAX", sequelize.col("price")),
+                    "maximumToyPrice"
+                ],
+                [
+                    sequelize.fn("MIN", sequelize.col("price")),
+                    "minimumToyPrice"
+                ]
+            ]
+        }
+    })
+
+    const expensiveToySummary = await Toy.findAll({
+        attributes: {
+            exclude: ['id', 'name', 'color', 'price', 'createdAt', 'updatedAt'],
+            include: [
+                [
+                    sequelize.fn("AVG", sequelize.col("price")),
+                    "averagePriceOfAnExpensiveToy"
+                ]
+            ]
+        },
+        where: {
+            price: {
+                [Op.gt]: 55
+            }
+        }
+    })
+
+    res.json({
+        totalNumberOfCats: totalNumberOfCats,
+        totalNumberOfToys: totalNumberOfToys,
+        toySummary: toySummary,
+        expensiveToySummary: expensiveToySummary
+    })
+})
+
 
 
 // Root route - DO NOT MODIFY
